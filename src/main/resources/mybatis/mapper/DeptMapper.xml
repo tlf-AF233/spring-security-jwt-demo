@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.af.system.mapper.DeptMapper">
+
+    <resultMap id="DeptResult" type="Dept">
+        <id     property="deptId"        column="dept_id"    />
+        <result property="deptPid"       column="dept_pid"   />
+        <result property="deptPids"      column="dept_pids"  />
+        <result property="deptName"      column="dept_name"  />
+        <result property="deptLeader"    column="dept_leader"/>
+        <result property="deptDesc"      column="dept_desc"  />
+        <result property="orderNum"      column="order_num"  />
+        <result property="deptStatus"    column="dept_status"/>
+    </resultMap>
+
+    <sql id="selectDeptVO">
+        select d.dept_id, d.dept_pid, d.dept_pids, d.dept_name, d.dept_leader, d.dept_desc, d.order_num, d.dept_status
+        from sys_dept d
+    </sql>
+
+    <select id="selectDeptList" resultMap="DeptResult" parameterType="Dept">
+        <include refid="selectDeptVO"/>
+        where d.is_deleted = 0
+        <if test="deptName != null and deptName != ''">
+            AND d.dept_name like concat('%', #{deptName}, '%')
+        </if>
+        <if test="deptStatus != null">
+            AND d.dept_status = #{deptStatus}
+        </if>
+        <if test="deptLeader != null and deptLeader != ''">
+            AND d.dept_leader = #{deptLedaer}
+        </if>
+        ${params.dataScope}
+        ORDER BY d.dept_pid, d.order_num
+    </select>
+
+    <update id="updateDept" parameterType="Dept">
+        update sys_dept
+        <set>
+            <if test="deptName != null and deptName != ''">
+                dept_name = #{deptName},
+            </if>
+            <if test="orderNum != null">
+                order_num = #{orderNum},
+            </if>
+            <if test="deptLeader != null and deptLeader != ''">
+                dept_leader = #{deptLeader},
+            </if>
+            <if test="deptDesc != null and deptDesc != ''">
+                dept_desc = #{deptDesc},
+            </if>
+            <if test="deptStatus != null">
+                dept_status = #{deptStatus},
+            </if>
+            <if test="deptPid != null and deptPid != 0">
+                dept_pid = #{deptPid},
+            </if>
+            <if test="deptPids != null and deptPids != ''">
+                dept_pids = #{deptPids},
+            </if>
+            update_time = now()
+        </set>
+        where is_deleted = 0 AND dept_id = #{deptId}
+    </update>
+
+    <update id="removeDept" parameterType="long">
+        update sys_dept set is_deleted = 1 where dept_id = #{deptId}
+    </update>
+
+    <insert id="createDept" parameterType="Dept">
+        insert into sys_dept
+            (dept_name, order_num, dept_leader, dept_desc,
+        <if test="deptPid != null and deptPid != 0"> dept_pid,</if>
+        <if test="deptPids != null and deptPids != ''"> dept_pids,</if>
+             create_time
+             )
+        values
+            (#{deptName}, #{orderNum}, #{deptLeader}, #{deptDesc},
+        <if test="deptPid != null and deptPid != 0"> #{deptPid},</if>
+        <if test="deptPids != null and deptPids != ''"> #{deptPids},</if>
+              now()
+            )
+    </insert>
+
+    <select id="checkChildren" parameterType="long" resultType="int">
+        select ifnull((select 1 from sys_dept where dept_pid = #{deptId} AND is_deleted = 0 limit 1), 0)
+    </select>
+
+    <select id="checkUserExist" parameterType="long" resultType="int">
+        select ifnull((select 1 from sys_user where dept_id = #{deptId} AND is_deleted = 0 limit 1), 0)
+    </select>
+
+</mapper>

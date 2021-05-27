@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.af.system.mapper.RoleMapper">
+
+   <resultMap id="RoleResult" type="Role">
+       <id     property="roleId"          column="role_id"    />
+       <result property="roleName"        column="role_name"  />
+       <result property="roleCode"        column="role_code"  />
+       <result property="orderNum"        column="order_num"  />
+       <result property="roleStatus"      column="role_status"/>
+       <result property="dataScope"       column="data_scope" />
+       <result property="roleDesc"        column="role_desc"  />
+       <result property="createTime"      column="create_time"/>
+       <result property="updateTime"      column="update_time"/>
+   </resultMap>
+
+    <sql id="selectRoleVO">
+        select r.role_id, r.role_name, r.role_code, r.order_num, r.role_status, r.data_scope, r.role_desc, r.create_time, r.update_time
+        from sys_role r
+    </sql>
+
+    <select id="selectRoleList" resultMap="RoleResult" parameterType="Role">
+        <include refid="selectRoleVO"/>
+        where r.is_deleted = 0
+        <if test="roleName != null and roleName != ''">
+            AND role_name = #{roleName}
+        </if>
+        <if test="roleCode != null and roleCode != ''">
+            AND role_code = #{roleCode}
+        </if>
+        ORDER BY r.order_num
+    </select>
+
+    <insert id="createRole" parameterType="Role" keyProperty="roleId" useGeneratedKeys="true">
+        insert into sys_role(role_name, role_code,
+                           <if test="orderNum != null">
+                             order_num,
+                           </if>
+                           <if test="roleStatus != null">
+                               role_status,
+                           </if>
+                              data_scope, role_desc, create_time)
+        values (#{roleName}, #{roleCode},
+                <if test="orderNum != null">
+                    #{orderNum},
+                </if>
+                <if test="roleStatus != null">
+                    #{roleStatus},
+                </if>
+                 #{dataScope}, #{roleDesc}, now())
+    </insert>
+
+    <select id="checkRoleName" parameterType="String" resultType="int">
+        select ifnull((select 1 from sys_role where role_name = #{roleName} AND is_deleted = 0 limit 1), 0)
+    </select>
+
+    <select id="checkRoleCode" parameterType="String" resultType="int">
+        select ifnull((select 1 from sys_role where role_code = #{roleCode} AND is_deleted = 0 limit 1), 0)
+    </select>
+
+    <update id="updateRole" parameterType="Role">
+        update sys_role
+        <set>
+            <if test="roleName != null and roleName != ''">
+                role_name = #{roleName},
+            </if>
+            <if test="roleCode != null and roleCode != ''">
+                role_code = #{roleCode},
+            </if>
+            <if test="orderNum != null">
+                order_num = #{orderNum},
+            </if>
+            <if test="roleDesc != null and roleDesc != ''">
+                role_desc = #{roleDesc},
+            </if>
+            <if test="roleStatus != null">
+                role_status = #{roleStatus},
+            </if>
+            <if test="dataScope != null">
+                data_scope = #{dataScope},
+            </if>
+            update_time = now()
+        </set>
+        where role_id = #{roleId}
+    </update>
+
+    <update id="deleteRole" parameterType="long">
+        update sys_role
+        set is_deleted = 1
+        where role_id = #{roleId}
+    </update>
+
+    <select id="checkUser" parameterType="long" resultType="int">
+        select ifnull((select 1 from sys_user_role where role_id = #{roleId} limit 1), 0)
+    </select>
+</mapper>

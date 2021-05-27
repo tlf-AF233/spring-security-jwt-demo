@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.af.system.mapper.UserMapper">
+    
+    <!-- User VO -->
+    <resultMap id="UserResult" type="User">
+        <id     property="userId"        column="user_id"     />
+        <result property="username"      column="username"    />
+        <result property="password"      column="password"    />
+        <result property="nickname"      column="nickname"    />
+        <result property="userEmail"     column="user_email"  />
+        <result property="userPhone"     column="user_phone"  />
+        <result property="userStatus"    column="user_status" />
+        <result property="lastLogin"     column="last_login"  />
+        <result property="createTime"    column="create_time" />
+        <result property="updateTime"    column="update_time" />
+        <result property="deptId"        column="dept_id"     />
+        <association property="dept" column="dept_id" javaType="Dept" resultMap="DeptResult"/>
+        <collection  property="roleList" javaType="List" resultMap="RoleResult"/>
+    </resultMap>
+
+    <!-- Dept VO -->
+    <resultMap id="DeptResult" type="Dept">
+        <id     property="deptId"        column="dept_id"     />
+        <result property="deptPid"       column="dept_pid"    />
+        <result property="deptName"      column="dept_name"   />
+        <result property="deptLeader"    column="dept_leader" />
+        <result property="deptDesc"      column="dept_desc"   />
+        <result property="orderNum"      column="order_num"   />
+        <result property="deptStatus"    column="dept_status" />
+    </resultMap>
+
+    <resultMap id="RoleResult" type="Role">
+        <id     property="roleId"        column="role_id"     />
+        <result property="roleName"      column="role_name"   />
+        <result property="roleCode"      column="role_code"   />
+        <result property="dataScope"     column="data_scope"  />
+        <result property="orderNum"      column="order_num"   />
+        <result property="roleStatus"    column="role_status" />
+        <result property="roleDesc"      column="role_desc"   />
+    </resultMap>
+
+    <sql id="selectUserVO">
+        select u.user_id, u.username, u.password, u.nickname, u.user_email, u.user_phone, u.user_status, u.last_login, u.create_time, u.update_time,
+               d.dept_id, d.dept_pid, d.dept_leader, d.dept_desc, d.order_num, d.dept_status, r.role_id, r.role_name, r.data_scope, r.role_code, r.order_num, r.role_status, r.role_desc
+        from sys_user u left join sys_dept d on u.dept_id = d.dept_id
+             left join sys_user_role ur on u.user_id = ur.user_id
+             left join sys_role r on ur.role_id = r.role_id
+    </sql>
+
+
+    <select id="selectUserByUsername" resultMap="UserResult">
+        <include refid="selectUserVO"/>
+            where u.username = #{username} AND u.is_deleted = 0;
+    </select>
+
+    <select id="selectUserById" resultMap="UserResult">
+        <include refid="selectUserVO"/>
+             where u.user_id = #{userId} AND u.is_deleted = 0;
+    </select>
+    
+    <select id="selectUserList" resultMap="UserResult">
+        select u.user_id, u.username, u.nickname, u.user_email, u.user_phone, u.user_status, u.last_login, u.create_time, u.update_time,
+               d.dept_name, d.dept_leader
+        from sys_user u left join sys_dept d on u.dept_id = d.dept_id
+        where u.is_deleted = 0
+            <if test="nickname != null and nickname != ''">
+                AND u.nickname like concat('%', #{nickname}, '%')
+            </if>
+            <if test="userStatus != null and userStatus != 0">
+                AND u.user_status = #{userStatus}
+            </if>
+            <if test="deptId != null and deptId != 0">
+                AND (u.dept_id = #{deptId} OR u.dept_id in (select dept_id from sys_dept where find_in_set(#{deptId}, dept_pids)) )
+            </if>
+            ${params.dataScope}
+    </select>
+
+    <update id="removeUser">
+        update sys_user set is_deleted = 1 where user_id = #{userId}
+    </update>
+
+    <update id="updateUser" parameterType="User">
+        update sys_user
+        <set>
+            <if test="username != null and username != ''">
+                username = #{username},
+            </if>
+            <if test="password != null and password != ''">
+                password = #{password},
+            </if>
+            <if test="nickname != null and nickname != ''">
+                nickname = #{nickname},
+            </if>
+            <if test="userStatus != null">
+                user_status = #{userStatus},
+            </if>
+            <if test="deptId != null and deptId != 0">
+                dept_id = #{deptId},
+            </if>
+            <if test="userPhone != null and userPhone != ''" >
+                user_phone = #{userPhone},
+            </if>
+            <if test="userEmail != null and userEmail != ''">
+                user_email = #{userEmail},
+            </if>
+            update_time = now()
+        </set>
+        where user_id = #{userId}
+    </update>
+
+    <update id="setLoginTime">
+        update sys_user set last_login = now() where username = #{username}
+    </update>
+
+    <insert id="createAnUser" parameterType="User" useGeneratedKeys="true" keyProperty="userId">
+        insert into sys_user(username, password, nickname, user_email, user_phone, dept_id, create_time, update_time)
+        values(#{username}, #{password}, #{nickname}, #{userEmail}, #{userPhone}, #{deptId}, now(), now())
+    </insert>
+
+    <select id="checkUsername" parameterType="String" resultType="int">
+        select ifnull((select 1 from sys_user where username = #{username} AND is_deleted = 0 limit 1), 0)
+    </select>
+
+    <select id="checkEmail" parameterType="String" resultType="int">
+        select ifnull((select 1 from sys_user where user_email = #{userEmail} AND is_deleted = 0 limit 1), 0)
+    </select>
+
+    <select id="checkPhone" parameterType="String" resultType="int">
+        select ifnull((select 1 from sys_user where user_phone = #{userPhone} AND is_deleted = 0 limit 1), 0)
+    </select>
+
+
+
+
+</mapper>

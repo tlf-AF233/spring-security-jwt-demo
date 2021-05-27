@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    username: root
+    password: 741236985
+    url: jdbc:mysql://localhost:3306/sys_rbac?serverTimezone=Asia/Shanghai&useSSL=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+mybatis:
+  type-aliases-package: com.af.system.entity
+  config-location: classpath:mybatis/mybatis-config.xml
+  mapper-locations: classpath:mybatis/mapper/*.xml
+token:
+  expiration: 30
+  expiration-remember-me: 7
+  secret: af1314rafasfweafaa49491321rfafaasf1e2dafq2rfaf1fafsfaf1f13rfghgfaf1f
+  refresh-expiration: 30
+swagger:
+  enabled: true

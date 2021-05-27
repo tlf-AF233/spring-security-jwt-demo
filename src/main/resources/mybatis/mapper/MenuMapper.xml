@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.af.system.mapper.MenuMapper">
+
+    <resultMap id="MenuResult" type="Menu">
+        <id     property="menuId"          column="menu_id"    />
+        <result property="menuName"        column="menu_name"  />
+        <result property="menuCode"        column="menu_code"  />
+        <result property="menuPid"         column="menu_pid"   />
+        <result property="orderNum"        column="order_num"  />
+        <result property="menuUrl"         column="menu_url"   />
+        <result property="menuType"        column="menu_type"  />
+        <result property="menuStatus"      column="menu_status"/>
+        <result property="menuIcon"        column="menu_icon"  />
+    </resultMap>
+
+    <sql id="selectMenuVO">
+        select m.menu_id, m.menu_name, m.menu_code, m.menu_pid, m.order_num, m.menu_url, m.menu_type, m.menu_status, m.menu_icon
+        from sys_menu m
+    </sql>
+
+    <select id="selectPermByUserId" resultType="String">
+        select distinct m.menu_code
+        from sys_menu m
+            left join sys_role_menu rm on m.menu_id = rm.menu_id
+            left join sys_user_role ur on ur.role_id = rm.role_id
+            left join sys_role r on r.role_id = rm.role_id
+        where ur.user_id = #{userId} AND r.role_status = 0 AND m.menu_status = 0
+    </select>
+
+    <select id="selectRouterMenuByUserId" parameterType="long" resultMap="MenuResult">
+        select m.menu_id, m.menu_pid, m.menu_name, m.menu_url, m.menu_code, m.order_num, m.menu_type, m.menu_icon, m.menu_status
+        from sys_menu m
+            left join sys_role_menu rm on rm.menu_id = m.menu_id
+            left join sys_user_role ur on ur.role_id = rm.role_id
+            left join sys_role r on ur.role_id = r.role_id
+        where ur.user_id = #{userId} AND r.role_status = 0 AND m.menu_status = 0 AND m.is_deleted = 0 AND m.menu_type in (2, 3)
+        ORDER BY m.menu_pid, m.order_num
+    </select>
+
+    <select id="selectMenuList" resultMap="MenuResult" parameterType="Menu">
+        <include refid="selectMenuVO"/>
+        where m.is_deleted = 0
+        <if test="menuName != null and menuName != ''">
+            AND m.menu_name like concat('%', #{menuName}, '%')
+        </if>
+        <if test="menuStatus != null">
+            AND m.menu_status = #{menuStatus}
+        </if>
+        ORDER BY m.menu_pid, m.order_num
+    </select>
+
+    <select id="selectMenuListByUserId" parameterType="Menu" resultMap="MenuResult">
+        select m.menu_id, m.menu_pid, m.menu_name, m.menu_url, m.menu_code, m.order_num, m.menu_type, m.menu_icon, m.menu_status
+        from sys_menu m
+            left join sys_role_menu rm on m.menu_id = rm.menu_id
+            left join sys_user_role ur on ur.role_id = rm.role_id
+            left join sys_role r on r.role_id = ur.role_id
+        where ur.user_id = #{params.userId} AND r.role_status = 0 AND m.menu_status = 0 AND m.is_deleted = 0
+    </select>
+
+    <update id="updateMenu" parameterType="Menu">
+        update sys_menu
+        <set>
+            <if test="menuName != null and menuName != ''">
+                menu_name = #{menuName},
+            </if>
+            <if test="menuPid != null and menuPid != ''">
+                menu_pid = #{menuPid},
+            </if>
+            <if test="orderNum != null">
+                order_num = #{orderNum},
+            </if>
+            <if test="menuIcon != null and menuIcon != ''">
+                menu_icon = #{menuIcon},
+            </if>
+            <if test="menuCode != null and menuCode != ''">
+                menu_code = #{menuCode},
+            </if>
+            <if test="menuUrl != null and menuUrl != ''">
+                menu_url = #{menuUrl},
+            </if>
+            <if test="menuStatus != null">
+                menu_status = #{menuStatus},
+            </if>
+            <if test="menuType != null">
+                menu_type = #{menuType},
+            </if>
+            update_time = now()
+        </set>
+            where menu_id = #{menuId}
+    </update>
+
+    <select id="selectMenuById" resultMap="MenuResult" parameterType="long">
+        <include refid="selectMenuVO"/>
+        where m.menu_id = #{menuId}
+        AND m.is_deleted = 0
+    </select>
+
+    <update id="deleteMenu" parameterType="long">
+        update sys_menu
+        set is_deleted = 1
+        where menu_id = #{menuId}
+    </update>
+
+    <select id="checkChildren" parameterType="long" resultType="int">
+        select ifnull((select 1 from sys_menu where menu_pid = #{menuId} AND is_deleted = 0 limit 1), 0)
+    </select>
+
+    <select id="checkMenuName" parameterType="string" resultType="int">
+       select ifnull((select 1 from sys_menu where is_deleted = 0 AND menu_name = #{menuName} limit 1), 0)
+    </select>
+</mapper>
