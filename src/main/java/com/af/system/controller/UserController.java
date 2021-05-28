@@ -2,9 +2,11 @@ package com.af.system.controller;
 
 import com.af.security.enums.ErrorCode;
 import com.af.security.modal.ResponseVO;
+import com.af.security.util.JwtTokenUtils;
 import com.af.security.util.ResponseUtils;
 import com.af.system.annotation.DataScope;
 import com.af.system.entity.User;
+import com.af.system.service.RoleService;
 import com.af.system.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -12,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author AF
@@ -24,6 +28,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private JwtTokenUtils jwtTokenUtils;
 
     /**
      * 查询用户列表
@@ -88,5 +95,17 @@ public class UserController {
     public ResponseVO<Object> removeUser(@PathVariable("userId") long userId) {
         userService.checkUserAllowed(userService.selectUserById(userId));
         return ResponseUtils.success(userService.removeUser(userId));
+    }
+
+    /**
+     * 查询个人信息
+     * @param request
+     * @return
+     */
+    @ApiOperation("查询个人信息")
+    @GetMapping("/space")
+    public ResponseVO<Object> getUserInfo(HttpServletRequest request) {
+        long userId = jwtTokenUtils.getId(jwtTokenUtils.getToken(request));
+        return ResponseUtils.success(userService.selectUserById(userId));
     }
 }

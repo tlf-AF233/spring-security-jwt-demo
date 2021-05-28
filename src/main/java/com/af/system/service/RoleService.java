@@ -1,6 +1,7 @@
 package com.af.system.service;
 
 import com.af.system.entity.Role;
+import com.af.system.entity.User;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;

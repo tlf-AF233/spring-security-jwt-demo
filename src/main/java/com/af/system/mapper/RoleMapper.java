@@ -1,6 +1,7 @@
 package com.af.system.mapper;
 
 import com.af.system.entity.Role;
+import com.af.system.entity.User;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;

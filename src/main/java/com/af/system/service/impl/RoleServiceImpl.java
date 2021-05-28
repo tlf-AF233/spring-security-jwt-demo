@@ -3,6 +3,7 @@ package com.af.system.service.impl;
 import com.af.system.entity.Role;
 import com.af.system.entity.RoleDept;
 import com.af.system.entity.RoleMenu;
+import com.af.system.entity.User;
 import com.af.system.mapper.RoleDeptMapper;
 import com.af.system.mapper.RoleMapper;
 import com.af.system.mapper.RoleMenuMapper;
